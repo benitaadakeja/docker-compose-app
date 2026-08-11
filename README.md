@@ -14,108 +14,123 @@ This project builds upon basic Docker containerization by introducing a multi-co
 
 The application is separated into three logical tiers:
 
-```text
-    Browser
-    │
-    │ localhost:**8080**
-    ▼
-    ┌───────────────┐
-    │     Nginx     │
-    │ Presentation  │
-    │     Layer     │
-    └───────┬───────┘
-    │
-    │ app:**5000**
-    ▼
-    ┌───────────────┐
-    │ Python Flask  │
-    │ Application   │
-    │     Layer     │
-    └───────┬───────┘
-    │
-    │ database:**3306**
-    ▼
-    ┌───────────────┐
-    │     MySQL     │
-    │   Data Layer  │
-    └───────┬───────┘
-    │
-    ▼
-    mysql_data
-    Named Volume
+```
+Browser
+  │
+  │ localhost:8080
+  ▼
+┌───────────────┐
+│     Nginx     │
+│  Presentation │
+│     Layer     │
+└───────┬───────┘
+        │ app:5000
+        ▼
+┌───────────────┐
+│ Python Flask  │
+│ Application   │
+│     Layer     │
+└───────┬───────┘
+        │ database:3306
+        ▼
+┌───────────────┐
+│     MySQL     │
+│   Data Layer  │
+└───────┬───────┘
+        │
+        ▼
+   mysql_data
+  (named volume)
+```
 
 Only Nginx is exposed to the host machine. The Flask application and MySQL database communicate internally through the Docker Compose network.
 
-🎯 Project Objectives
+---
+
+## 🎯 Project Objectives
 
 The project was designed to provide practical experience with:
 
-### Docker Compose
+**Docker Compose**
+- Multi-container applications
+- Three-tier architecture
+- Docker networking
+- Container-to-container communication
+- Nginx reverse proxying
 
-Multi-container applications
-Three-tier architecture
-Docker networking
-Container-to-container communication
-Nginx reverse proxying
-### Python Flask
-MySQL
-Environment variables
-Docker named volumes
-Persistent application data
-Container lifecycle management
-Docker troubleshooting
-Linux / **WSL**
-Git and GitHub
-🛠️ Technologies
-Technology	Purpose
-Docker	Containerization
-Docker Compose	Multi-container orchestration
-Nginx	Reverse proxy / presentation layer
-Python	Application development
-Flask	Web application framework
-MySQL 8.4	Database
-Git	Version control
-GitHub	Source control and project hosting
-Ubuntu / **WSL**	Development environment
-🏗️ Architecture
+**Application Stack**
+- Python Flask
+- MySQL
+- Environment variables
+- Docker named volumes
+- Persistent application data
+- Container lifecycle management
+- Docker troubleshooting
+
+**Supporting Tools**
+- Linux / WSL
+- Git and GitHub
+
+---
+
+## 🛠️ Technologies
+
+| Technology | Purpose |
+|---|---|
+| Docker | Containerization |
+| Docker Compose | Multi-container orchestration |
+| Nginx | Reverse proxy / presentation layer |
+| Python | Application development |
+| Flask | Web application framework |
+| MySQL 8.4 | Database |
+| Git | Version control |
+| GitHub | Source control and project hosting |
+| Ubuntu / WSL | Development environment |
+
+---
+
+## 🏗️ Architecture
 
 The application follows a three-tier architecture.
 
-### Presentation Layer
+### Presentation Layer — Nginx
 
-Nginx
+Nginx is the public-facing component of the application. It receives HTTP requests from the browser and forwards them to the Flask application.
 
-Nginx is the public-facing component of the application. It receives **HTTP** requests from the browser and forwards them to the Flask application.
-
-Host port **8080**
-    │
-    ▼
+```
+Host port 8080
+      │
+      ▼
 Nginx port 80
-### Application Layer
+```
 
-### Python Flask
+### Application Layer — Python Flask
 
-The Flask application contains the application logic and communicates with MySQL.
+The Flask application contains the application logic and communicates with MySQL. It listens internally on port 5000 and is not directly exposed to the host.
 
-It listens internally on port **5000** and is not directly exposed to the host.
-
+```
 Nginx
-    │
-    ▼
-app:**5000**
-### Data Layer
+  │
+  ▼
+app:5000
+```
 
-MySQL
+### Data Layer — MySQL
 
-MySQL stores the application's persistent data.
+MySQL stores the application's persistent data. It listens internally on port 3306.
 
-It listens internally on port **3306**.
-
+```
 Flask
-    │
-    ▼
-database:**3306**
-📂 Project Structure
+  │
+  ▼
+database:3306
+```
+
+---
+
+## 📂 Project Structure
+
+```
 docker-compose-app/
 │
 ├── app/
@@ -155,17 +170,26 @@ docker-compose-app/
 ├── .env.example
 ├── .gitignore
 ├── compose.yaml
-└── **README**.md
-🚀 Building the Application
-## Creating the Project Directory
+└── README.md
+```
+
+---
+
+## 🚀 Building the Application
+
+### 1. Creating the Project Directory
 
 The project was created inside my DevOps projects directory.
 
-cd ~/devops-projects mkdir docker-compose-app cd docker-compose-app
+```bash
+cd ~/devops-projects
+mkdir docker-compose-app
+cd docker-compose-app
+```
 
 The initial project directory was intentionally kept empty before the application components were created.
 
-🐍 2. Creating the Flask Application
+### 2. Creating the Flask Application 🐍
 
 The application layer was implemented using Python and Flask.
 
@@ -173,405 +197,448 @@ The Flask application provides a simple webpage and keeps track of how many time
 
 The application uses environment variables for its database configuration instead of hard-coding database credentials.
 
-The database host is specified using the Docker Compose service name:
+The database host is specified using the Docker Compose service name: `database`
 
-database
+This allows Docker's internal DNS to resolve the MySQL container automatically.
 
-This allows Docker's internal **DNS** to resolve the MySQL container automatically.
+### 3. Containerizing the Flask Application 🐳
 
-🐳 3. Containerizing the Flask Application
-
-A Dockerfile was created inside the app/ directory.
+A Dockerfile was created inside the `app/` directory.
 
 The Dockerfile defines the Python environment, copies the application code into the image, installs the required dependencies, and starts the Flask application.
 
 The image was then built with Docker.
 
-🌐 4. Configuring Nginx
+### 4. Configuring Nginx 🌐
 
 Nginx was selected as the presentation layer and reverse proxy.
 
-A custom Nginx configuration was created in:
+A custom Nginx configuration was created in `nginx/default.conf`.
 
-nginx/default.conf
+The purpose of the configuration is to forward requests received by Nginx to the Flask application. The request flow therefore becomes:
 
-The purpose of the configuration is to forward requests received by Nginx to the Flask application.
-
-The request flow therefore becomes:
-
-Browser
-    │
-    ▼
-Nginx
-    │
-    ▼
-Flask
+```
+Browser → Nginx → Flask
+```
 
 The browser does not need to communicate directly with the Flask application.
 
-⚙️ 5. Docker Compose Configuration
+### 5. Docker Compose Configuration ⚙️
 
 Docker Compose was used to define and orchestrate the three services.
 
-The final compose.yaml contains:
+The final `compose.yaml` contains:
 
+```yaml
 services:
-    web:
+  web:
     image: nginx:1.29.1
     ports:
-    - ***8080**:80*
+      - "8080:80"
     volumes:
-    - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
-    app:
+  app:
     build: ./app
     environment:
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
 
-    database:
+  database:
     image: mysql:8.4
     environment:
-    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    MYSQL_DATABASE: ${MYSQL_DATABASE}
-    MYSQL_USER: ${MYSQL_USER}
-    MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-    - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
 
-volumes: mysql_data:
+volumes:
+  mysql_data:
+```
 
 This configuration defines:
 
-The Nginx web service The Flask application service The MySQL database service The Docker network created automatically by Compose The persistent MySQL volume Environment variables used by the application and database 🔐 6. Environment Variables
+- The Nginx web service
+- The Flask application service
+- The MySQL database service
+- The Docker network created automatically by Compose
+- The persistent MySQL volume
+- Environment variables used by the application and database
 
-Database credentials are stored in a .env file rather than directly inside compose.yaml.
+### 6. Environment Variables 🔐
 
-The .env file contains values corresponding to:
+Database credentials are stored in a `.env` file rather than directly inside `compose.yaml`.
 
-MYSQL_DATABASE=your_database_name MYSQL_USER=your_database_user MYSQL_PASSWORD=your_database_password MYSQL_ROOT_PASSWORD=your_root_password
+The `.env` file contains values corresponding to:
 
-The real .env file is excluded from Git using .gitignore.
+```
+MYSQL_DATABASE=your_database_name
+MYSQL_USER=your_database_user
+MYSQL_PASSWORD=your_database_password
+MYSQL_ROOT_PASSWORD=your_root_password
+```
 
-A .env.example file is included in the repository to document the required variables without exposing the actual credentials.
+The real `.env` file is excluded from Git using `.gitignore`.
 
-.env
-    │
-    ├── Contains real credentials
-    └── Excluded from Git
+A `.env.example` file is included in the repository to document the required variables without exposing the actual credentials.
 
-.env.example
-    │
-    ├── Contains variable names / placeholders
-    └── Safe to commit
+| File | Contents | Committed to Git? |
+|---|---|---|
+| `.env` | Real credentials | ❌ Excluded |
+| `.env.example` | Variable names / placeholders | ✅ Safe to commit |
 
 This separation prevents sensitive credentials from being accidentally pushed to GitHub.
 
-🔗 7. Docker Compose Networking
+### 7. Docker Compose Networking 🔗
 
 Docker Compose automatically creates a private network for the services.
 
-The services can communicate with one another using their service names.
+The services can communicate with one another using their service names, for example:
 
-For example:
+```
+app → database:3306
+```
 
-app → database:**3306**
-
-The Flask application does not need to know the IP address of the MySQL container.
-
-Docker's internal **DNS** resolves:
-
-database
-
-to the correct container.
+The Flask application does not need to know the IP address of the MySQL container. Docker's internal DNS resolves `database` to the correct container.
 
 The network can be viewed with:
 
+```bash
 sudo docker network ls
+```
 
 The network configuration can also be inspected:
 
+```bash
 sudo docker network inspect docker-compose-app_default
+```
 
-🔌 8. Understanding Public and Internal Ports
+### 8. Understanding Public and Internal Ports 🔌
 
 One of the major concepts demonstrated by this project is the difference between a published host port and an internal container port.
 
 Nginx is configured as:
 
-ports: - ***8080**:80*
+```yaml
+ports:
+  - "8080:80"
+```
 
 This means:
 
-Host
-localhost:**8080**
-    │
-    ▼
-Container
-Nginx:80
+```
+Host: localhost:8080  →  Container: Nginx:80
+```
 
 Therefore, the application can be accessed from the host using:
 
-[http://localhost:**8080**](http://localhost:**8080**)
+```
+http://localhost:8080
+```
 
-However, the Flask service is not published to the host:
-
-**5000**/tcp
-
-and MySQL is also not published:
-
-**3306**/tcp
-
-These ports are available for communication inside the Docker network but are not directly exposed to the host.
+However, the Flask service is not published to the host (`5000/tcp`), and MySQL is also not published (`3306/tcp`). These ports are available for communication inside the Docker network but are not directly exposed to the host.
 
 This creates a useful separation:
 
-    **PUBLIC**
-    │
-    ▼
-    localhost:**8080**
-    │
-    ▼
-    Nginx
-    │
-    **PRIVATE** **NETWORK**
-    │
-    ┌────────┴────────┐
-    ▼                 ▼
-    Flask              MySQL
-    :**5000**               :**3306**
-🧪 9. Testing Internal Connectivity
+```
+        PUBLIC
+          │
+          ▼
+     localhost:8080
+          │
+          ▼
+        Nginx
+          │
+   PRIVATE NETWORK
+          │
+   ┌──────┴──────┐
+   ▼             ▼
+ Flask         MySQL
+ :5000         :3306
+```
+
+### 9. Testing Internal Connectivity 🧪
 
 Container-to-container communication was tested using Docker's internal network.
 
-The database can be reached using its service name rather than localhost.
+The database can be reached using its service name rather than `localhost`.
 
-An attempt to access MySQL through the host's localhost:**3306** was unsuccessful because the database port was not published to the host.
+An attempt to access MySQL through the host's `localhost:3306` was unsuccessful because the database port was not published to the host.
 
-This demonstrated the difference between:
+This demonstrated the difference between `database:3306` and `localhost:3306`:
 
-database:**3306**
-
-and:
-
-localhost:**3306**
-
-The first refers to the MySQL service from within the Docker network.
-
-The second refers to port **3306** on the host machine.
+- `database:3306` refers to the MySQL service from within the Docker network.
+- `localhost:3306` refers to port 3306 on the host machine.
 
 They are not the same thing.
 
-▶️ 10. Starting the Application
+### 10. Starting the Application ▶️
 
 The complete application stack can be started with:
 
+```bash
 sudo docker compose up -d
+```
 
-The -d flag runs the containers in detached mode.
+The `-d` flag runs the containers in detached mode.
 
 The running services can be viewed with:
 
+```bash
 sudo docker compose ps
+```
 
-The services are:
+The services are: `app`, `database`, `web`
 
-app database web 🔍 11. Inspecting the Application
+### 11. Inspecting the Application 🔍
 
 Docker Compose provides several useful commands for inspecting the application.
 
-View running services:
-
+```bash
+# View running services
 sudo docker compose ps
 
-View all containers:
-
+# View all containers
 sudo docker compose ps -a
 
-View the Compose project:
-
+# View the Compose project
 sudo docker compose ls
 
-Validate the Compose configuration:
-
+# Validate the Compose configuration
 sudo docker compose config
 
-View service logs:
-
+# View service logs
 sudo docker compose logs
 
-View logs for a specific service:
+# View logs for a specific service
+sudo docker compose logs app
+sudo docker compose logs web
+sudo docker compose logs database
+```
 
-sudo docker compose logs app sudo docker compose logs web sudo docker compose logs database 💾 12. Persistent Database Storage
+### 12. Persistent Database Storage 💾
 
 The MySQL service uses a named Docker volume:
 
-volumes: - mysql_data:/var/lib/mysql
+```yaml
+volumes:
+  - mysql_data:/var/lib/mysql
+```
 
 The volume allows MySQL data to survive container recreation.
 
 The volume can be viewed with:
 
+```bash
 sudo docker volume ls
+```
 
 The volume configuration was inspected to understand how Docker maps persistent storage into the MySQL container.
 
-♻️ 13. Testing Persistence
+### 13. Testing Persistence ♻️
 
 A key part of the project was verifying that database data survives the removal and recreation of containers.
 
 The application stack was removed with:
 
+```bash
 sudo docker compose down
+```
 
 This removes the containers and network but does not remove the named volume by default.
 
 The application was then recreated:
 
+```bash
 sudo docker compose up -d
+```
 
-Because the MySQL data was stored in the named mysql_data volume, the database persisted across the container lifecycle.
+Because the MySQL data was stored in the named `mysql_data` volume, the database persisted across the container lifecycle.
 
 This demonstrates an important Docker concept:
 
-Containers = Disposable Data      = Persistent
+```
+Containers = Disposable
+Data       = Persistent
+```
 
 The named volume deliberately separates application data from the lifecycle of the MySQL container.
 
-🌍 14. Testing the Complete Application
+### 14. Testing the Complete Application 🌍
 
 The final application can be tested from the host with:
 
-curl [http://localhost:**8080**](http://localhost:**8080**)
+```bash
+curl http://localhost:8080
+```
 
-The browser can also access:
-
-[http://localhost:**8080**](http://localhost:**8080**)
+The browser can also access `http://localhost:8080`.
 
 The application displays the page and tracks the number of visits using the MySQL database.
 
-The final container state was verified with Docker Compose:
+The final container state was verified with Docker Compose.
 
-🔄 Complete Request Flow
+---
+
+## 🔄 Complete Request Flow
 
 The complete request lifecycle is:
 
-    Browser
-    │
-    │ **HTTP** :**8080**
-    ▼
-    ┌───────────────┐
-    │     Nginx     │
-    │      :80      │
-    └───────┬───────┘
-    │
-    │ **HTTP**
-    ▼
-    ┌───────────────┐
-    │    Flask      │
-    │     :**5000**     │
-    └───────┬───────┘
-    │
-    │ MySQL
-    ▼
-    ┌───────────────┐
-    │     MySQL     │
-    │     :**3306**     │
-    └───────────────┘
-    │
-    ▼
-    mysql_data
+```
+Browser
+  │ HTTP :8080
+  ▼
+┌───────────────┐
+│     Nginx     │
+│      :80      │
+└───────┬───────┘
+        │ HTTP
+        ▼
+┌───────────────┐
+│    Flask      │
+│     :5000     │
+└───────┬───────┘
+        │ MySQL
+        ▼
+┌───────────────┐
+│     MySQL     │
+│     :3306     │
+└───────┬───────┘
+        │
+        ▼
+   mysql_data
+```
 
 Only the first connection crosses from the host into the Docker environment:
 
-localhost:**8080** → Nginx:80
+```
+localhost:8080 → Nginx:80
+```
 
 The remaining communication occurs inside the Docker network:
 
-Nginx → app:**5000** app   → database:**3306** 🧹 Container Lifecycle
+```
+Nginx → app:5000
+app   → database:3306
+```
+
+---
+
+## 🧹 Container Lifecycle
 
 Docker Compose was also used to practice the complete lifecycle of a multi-container application.
 
-Start sudo docker compose up -d Check status sudo docker compose ps View logs sudo docker compose logs Stop and remove containers sudo docker compose down Rebuild and start sudo docker compose up -d --build
+| Action | Command |
+|---|---|
+| Start | `sudo docker compose up -d` |
+| Check status | `sudo docker compose ps` |
+| View logs | `sudo docker compose logs` |
+| Stop and remove containers | `sudo docker compose down` |
+| Rebuild and start | `sudo docker compose up -d --build` |
 
 This workflow makes it possible to repeatedly build, test, destroy, and recreate the application stack.
 
-🧠 Key Lessons
+---
+
+## 🧠 Key Lessons
 
 This project provided practical experience with:
 
-### Docker Compose
+**Docker Compose**
+- Defining multiple services
+- Building custom images
+- Pulling existing images
+- Managing containers as a single application
+- Using Compose lifecycle commands
 
-Defining multiple services
-Building custom images
-Pulling existing images
-Managing containers as a single application
-Using Compose lifecycle commands
-Networking
-Docker bridge networks
-Container-to-container communication
-Docker's internal **DNS**
-Service-name based communication
-Internal versus published ports
-### Reverse Proxying
-Nginx as a reverse proxy
-Separating the public-facing layer from the application layer
-Forwarding requests between containers
-Storage
-Named Docker volumes
-Persistent database storage
-Container lifecycle versus data lifecycle
-Anonymous versus named volumes
-Security and Configuration
-Environment variables
-.env
-.env.example
-.gitignore
-Avoiding hard-coded credentials
-Keeping database services private
-Troubleshooting
-Inspecting containers
-Reading Docker Compose logs
-Inspecting networks
-Inspecting volumes
-Testing internal connectivity
-Understanding port mappings
-📋 Useful Commands
-Command	Purpose
-sudo docker compose up -d	Start the application
-sudo docker compose up -d --build	Rebuild images and start
-sudo docker compose down	Stop and remove containers/network
-sudo docker compose ps	Show running services
-sudo docker compose ps -a	Show all service containers
-sudo docker compose ls	List Compose projects
-sudo docker compose logs	View logs
-sudo docker compose config	Validate/render Compose configuration
-sudo docker network ls	List Docker networks
-sudo docker network inspect	Inspect a network
-sudo docker volume ls	List Docker volumes
-sudo docker volume inspect	Inspect a volume
-curl [http://localhost:**8080**](http://localhost:**8080**)	Test the application
-🏁 Conclusion
+**Networking**
+- Docker bridge networks
+- Container-to-container communication
+- Docker's internal DNS
+- Service-name based communication
+- Internal versus published ports
+
+**Reverse Proxying**
+- Nginx as a reverse proxy
+- Separating the public-facing layer from the application layer
+- Forwarding requests between containers
+
+**Storage**
+- Named Docker volumes
+- Persistent database storage
+- Container lifecycle versus data lifecycle
+- Anonymous versus named volumes
+
+**Security and Configuration**
+- Environment variables
+- `.env` and `.env.example`
+- `.gitignore`
+- Avoiding hard-coded credentials
+- Keeping database services private
+
+**Troubleshooting**
+- Inspecting containers
+- Reading Docker Compose logs
+- Inspecting networks
+- Inspecting volumes
+- Testing internal connectivity
+- Understanding port mappings
+
+---
+
+## 📋 Useful Commands
+
+| Command | Purpose |
+|---|---|
+| `sudo docker compose up -d` | Start the application |
+| `sudo docker compose up -d --build` | Rebuild images and start |
+| `sudo docker compose down` | Stop and remove containers/network |
+| `sudo docker compose ps` | Show running services |
+| `sudo docker compose ps -a` | Show all service containers |
+| `sudo docker compose ls` | List Compose projects |
+| `sudo docker compose logs` | View logs |
+| `sudo docker compose config` | Validate/render Compose configuration |
+| `sudo docker network ls` | List Docker networks |
+| `sudo docker network inspect` | Inspect a network |
+| `sudo docker volume ls` | List Docker volumes |
+| `sudo docker volume inspect` | Inspect a volume |
+| `curl http://localhost:8080` | Test the application |
+
+---
+
+## 🏁 Conclusion
 
 This project demonstrates how a simple Dockerized application can be expanded into a multi-container architecture using Docker Compose.
 
 The final architecture separates the application into:
 
-Nginx ↓ Flask ↓ MySQL
+```
+Nginx → Flask → MySQL
+```
 
 while using:
 
-Docker Compose networking for internal communication Nginx for public access and reverse proxying Environment variables for configuration A named volume for persistent database storage
+- Docker Compose networking for internal communication
+- Nginx for public access and reverse proxying
+- Environment variables for configuration
+- A named volume for persistent database storage
 
 The result is a reproducible three-tier application that can be started, stopped, rebuilt, inspected, and recreated using Docker Compose.
 
-👩🏽‍💻 Author
+---
 
-### Benita Adakeja
+## 👩🏽‍💻 Author
 
+**Benita Adakeja**
 Computer Science Student | DevOps & Cloud Enthusiast
 
-📄 License
+[GitHub](https://github.com/)
 
-This project is licensed under the **MIT** License.
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
